@@ -10,8 +10,8 @@
 #define OUT_HEI (INP_HEI / 2u)
 #define VAL_SHIFT (5)
 
-void func_natc(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8);
-void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8);
+void func_natc(const unsigned int inp_wid_u32, const unsigned int inp_hei_u32, const unsigned int out_wid_u32, const unsigned int out_hei_u32, const signed int val_shift_s32, const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8);
+void func_neon(const unsigned int inp_wid_u32, const unsigned int inp_hei_u32, const unsigned int out_wid_u32, const unsigned int out_hei_u32, const signed int val_shift_s32, const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8);
 
 void main (void) {
     FILE* fp;
@@ -38,7 +38,7 @@ void main (void) {
 
     for (z_u32 = 0u; z_u32 < ITERATION; z_u32++)    
     {
-        func_natc(a_ker_s8, sa_inp_0_u8, sa_out_0_u8);
+        func_natc(INP_WID, INP_HEI, OUT_WID, OUT_HEI, VAL_SHIFT, a_ker_s8, sa_inp_0_u8, sa_out_0_u8);
     }
 
     printf("natural C code version time: %f sec\n", (float)(clock() - time_start) / CLOCKS_PER_SEC);
@@ -52,7 +52,7 @@ void main (void) {
 
     for (z_u32 = 0u; z_u32 < ITERATION; z_u32++)    
     {
-        func_neon(a_ker_s8, sa_inp_0_u8, sa_out_1_u8);
+        func_neon(INP_WID, INP_HEI, OUT_WID, OUT_HEI, VAL_SHIFT, a_ker_s8, sa_inp_0_u8, sa_out_1_u8);
     }
 
     printf("neon C code version time: %f sec\n", (float)(clock() - time_start) / CLOCKS_PER_SEC);
@@ -74,7 +74,7 @@ void main (void) {
     }
 }
 
-void func_natc(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8)
+void func_natc(const unsigned int inp_wid_u32, const unsigned int inp_hei_u32, const unsigned int out_wid_u32, const unsigned int out_hei_u32, const signed int val_shift_s32, const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8)
 {
     unsigned int i_u32;
     unsigned int j_u32;
@@ -90,9 +90,9 @@ void func_natc(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
     static unsigned char sa_tmp_0_u8[INP_WID * INP_HEI] = { 0, }; // filtered image
 
     // filtering
-    for (j_u32 = 0u; j_u32 < (INP_HEI - 2u); j_u32++)
+    for (j_u32 = 0u; j_u32 < (inp_hei_u32 - 2u); j_u32++)
     {
-        for (i_u32 = 0u; i_u32 < (INP_WID - 2u); i_u32++)
+        for (i_u32 = 0u; i_u32 < (inp_wid_u32 - 2u); i_u32++)
         {
             sum_s16 = 0;
 
@@ -101,23 +101,13 @@ void func_natc(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
                 for (k_w_u32 = 0u; k_w_u32 < 3u; k_w_u32++)
                 {
                     ker_s8 = p_ker_s8[k_w_u32 + (k_h_u32 * 3u)];
-                    inp_u8 = p_inp_u8[k_w_u32 + i_u32 + ((k_h_u32 + j_u32) * INP_WID)];
+                    inp_u8 = p_inp_u8[k_w_u32 + i_u32 + ((k_h_u32 + j_u32) * inp_wid_u32)];
 
                     sum_s16 += ker_s8 * inp_u8;
-
-                    //if (i_u32 == 0 && j_u32 == 0)
-                    //{
-                    //    printf("%u, %u: %d %d %d\n", k_w_u32, k_h_u32, ker_s16, inp_u8, sum_s32);
-                    //}
                 }
             }
 
-            //if (i_u32 == 0 && j_u32 == 0)
-            //{
-            //    printf("%u, %u: %d\n", i_u32, j_u32, sum_s32);
-            //}
-
-            sum_s16 >>= VAL_SHIFT;
+            sum_s16 >>= val_shift_s32;
             if (sum_s16 > 255)
             {
                 sum_s16 = 255;
@@ -127,42 +117,37 @@ void func_natc(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
                 sum_s16 = 0;
             }
 
-            //if (i_u32 == 0 && j_u32 == 0)
-            //{
-            //    printf("%d\n", sum_s32);
-            //}
-
-            sa_tmp_0_u8[i_u32 + (j_u32 * INP_WID)] = (unsigned char)sum_s16;
+            sa_tmp_0_u8[i_u32 + (j_u32 * inp_wid_u32)] = (unsigned char)sum_s16;
         }
     }
 
     // 2x2 max pooling
-    for (j_u32 = 0u; j_u32 < OUT_HEI; j_u32++)
+    for (j_u32 = 0u; j_u32 < out_hei_u32; j_u32++)
     {
-        for (i_u32 = 0u; i_u32 < OUT_WID; i_u32++)
+        for (i_u32 = 0u; i_u32 < out_wid_u32; i_u32++)
         {
-            max_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 0u + (((j_u32 * 2u) + 0u) * INP_WID)];
-            tmp_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 1u + (((j_u32 * 2u) + 0u) * INP_WID)];
+            max_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 0u + (((j_u32 * 2u) + 0u) * inp_wid_u32)];
+            tmp_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 1u + (((j_u32 * 2u) + 0u) * inp_wid_u32)];
             if (max_u8 < tmp_u8)
             {
                 max_u8 = tmp_u8;
             }
-            tmp_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 0u + (((j_u32 * 2u) + 1u) * INP_WID)];
+            tmp_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 0u + (((j_u32 * 2u) + 1u) * inp_wid_u32)];
             if (max_u8 < tmp_u8)
             {
                 max_u8 = tmp_u8;
             }
-            tmp_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 1u + (((j_u32 * 2u) + 1u) * INP_WID)];
+            tmp_u8 = sa_tmp_0_u8[(i_u32 * 2u) + 1u + (((j_u32 * 2u) + 1u) * inp_wid_u32)];
             if (max_u8 < tmp_u8)
             {
                 max_u8 = tmp_u8;
             }
-            p_out_u8[i_u32 + (j_u32 * OUT_WID)] = max_u8;
+            p_out_u8[i_u32 + (j_u32 * out_wid_u32)] = max_u8;
         }
     }
 }
 
-void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8)
+void func_neon(const unsigned int inp_wid_u32, const unsigned int inp_hei_u32, const unsigned int out_wid_u32, const unsigned int out_hei_u32, const signed int val_shift_s32, const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsigned char* p_out_u8)
 {
     unsigned int i_u32;
     unsigned int j_u32;
@@ -171,15 +156,15 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
     const int16x8_t u8max_s16x8 = vdupq_n_s16(255);
 
 #if 0
-    for (j_u32 = 0u; j_u32 < (OUT_HEI - 1u); j_u32++)
+    for (j_u32 = 0u; j_u32 < (out_hei_u32 - 1u); j_u32++)
     {
-        const unsigned char* restrict p_inp_line0_u8 = &sa_inp_0_u8[((2u * j_u32) + 0u) * INP_WID];
-        const unsigned char* restrict p_inp_line1_u8 = &sa_inp_0_u8[((2u * j_u32) + 1u) * INP_WID];
-        const unsigned char* restrict p_inp_line2_u8 = &sa_inp_0_u8[((2u * j_u32) + 2u) * INP_WID];
-        const unsigned char* restrict p_inp_line3_u8 = &sa_inp_0_u8[((2u * j_u32) + 3u) * INP_WID];
-        unsigned char* restrict p_out_u8 = &sa_out_1_u8[j_u32 * OUT_WID];
+        const unsigned char* restrict p_inp_line0_u8 = &sa_inp_0_u8[((2u * j_u32) + 0u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line1_u8 = &sa_inp_0_u8[((2u * j_u32) + 1u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line2_u8 = &sa_inp_0_u8[((2u * j_u32) + 2u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line3_u8 = &sa_inp_0_u8[((2u * j_u32) + 3u) * inp_wid_u32];
+        unsigned char* restrict p_out_u8 = &sa_out_1_u8[j_u32 * out_wid_u32];
 
-        for (i_u32 = 0u; i_u32 < OUT_WID; i_u32 += 8u)
+        for (i_u32 = 0u; i_u32 < out_wid_u32; i_u32 += 8u)
         {
             uint8x16_t inp_line00_0_u8x16 = vld1q_u8(&p_inp_line0_u8[0]);
             uint8x16_t inp_line00_1_u8x16 = vld1q_u8(&p_inp_line0_u8[1]);
@@ -357,7 +342,7 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
 
             max_s32x4 = vcombine_s32(max_l_s32x2, max_h_s32x2);
 
-            shift_s32x4 = vshrq_n_s32(max_s32x4, VAL_SHIFT);
+            shift_s32x4 = vshrq_n_s32(max_s32x4, val_shift_s32);
             shift_s16x4 = vqmovn_s32(shift_s32x4);
 
             shift_s16x4 = vmax_s16(shift_s16x4, zero_s16x4);
@@ -498,7 +483,7 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
 
             max_s32x4 = vcombine_s32(max_l_s32x2, max_h_s32x2);
 
-            shift_s32x4 = vshrq_n_s32(max_s32x4, VAL_SHIFT);
+            shift_s32x4 = vshrq_n_s32(max_s32x4, val_shift_s32);
             shift_s16x4 = vqmovn_s32(shift_s32x4);
 
             shift_s16x4 = vmax_s16(shift_s16x4, zero_s16x4);
@@ -517,15 +502,15 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
         *p_out_u8 = 0u;
     }
 #elif 0
-    for (j_u32 = 0u; j_u32 < (OUT_HEI - 1u); j_u32++)
+    for (j_u32 = 0u; j_u32 < (out_hei_u32 - 1u); j_u32++)
     {
-        const unsigned char* restrict p_inp_line0_u8 = &sa_inp_0_u8[((2u * j_u32) + 0u) * INP_WID];
-        const unsigned char* restrict p_inp_line1_u8 = &sa_inp_0_u8[((2u * j_u32) + 1u) * INP_WID];
-        const unsigned char* restrict p_inp_line2_u8 = &sa_inp_0_u8[((2u * j_u32) + 2u) * INP_WID];
-        const unsigned char* restrict p_inp_line3_u8 = &sa_inp_0_u8[((2u * j_u32) + 3u) * INP_WID];
-        unsigned char* restrict p_out_u8 = &sa_out_1_u8[j_u32 * OUT_WID];
+        const unsigned char* restrict p_inp_line0_u8 = &sa_inp_0_u8[((2u * j_u32) + 0u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line1_u8 = &sa_inp_0_u8[((2u * j_u32) + 1u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line2_u8 = &sa_inp_0_u8[((2u * j_u32) + 2u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line3_u8 = &sa_inp_0_u8[((2u * j_u32) + 3u) * inp_wid_u32];
+        unsigned char* restrict p_out_u8 = &sa_out_1_u8[j_u32 * out_wid_u32];
 
-        for (i_u32 = 0u; i_u32 < OUT_WID; i_u32 += 8u)
+        for (i_u32 = 0u; i_u32 < out_wid_u32; i_u32 += 8u)
         {
             uint8x8_t inp_line00_0_u8x8 = vld1_u8(&p_inp_line0_u8[0]);
             uint8x8_t inp_line00_1_u8x8 = vld1_u8(&p_inp_line0_u8[1]);
@@ -678,7 +663,7 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
 
             int32x4_t max_0_s32x4 = vcombine_s32(max_0_l_s32x2, max_0_h_s32x2);
 
-            int32x4_t shift_0_s32x4 = vshrq_n_s32(max_0_s32x4, VAL_SHIFT);
+            int32x4_t shift_0_s32x4 = vshrq_n_s32(max_0_s32x4, val_shift_s32);
             int16x4_t shift_0_s16x4 = vqmovn_s32(shift_0_s32x4);
 
             int16x4_t shift_zero_0_s16x4 = vmax_s16(shift_0_s16x4, zero_s16x4);
@@ -837,7 +822,7 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
 
             int32x4_t max_1_s32x4 = vcombine_s32(max_1_l_s32x2, max_1_h_s32x2);
 
-            int32x4_t shift_1_s32x4 = vshrq_n_s32(max_1_s32x4, VAL_SHIFT);
+            int32x4_t shift_1_s32x4 = vshrq_n_s32(max_1_s32x4, val_shift_s32);
             int16x4_t shift_1_s16x4 = vqmovn_s32(shift_1_s32x4);
 
             int16x4_t shift_zero_1_s16x4 = vmax_s16(shift_1_s16x4, zero_s16x4);
@@ -856,15 +841,15 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
         *p_out_u8 = 0u;
     }
 #else
-    for (j_u32 = 0u; j_u32 < (OUT_HEI - 1u); j_u32++)
+    for (j_u32 = 0u; j_u32 < (out_hei_u32 - 1u); j_u32++)
     {
-        const unsigned char* restrict p_inp_line0_u8 = &p_inp_u8[((2u * j_u32) + 0u) * INP_WID];
-        const unsigned char* restrict p_inp_line1_u8 = &p_inp_u8[((2u * j_u32) + 1u) * INP_WID];
-        const unsigned char* restrict p_inp_line2_u8 = &p_inp_u8[((2u * j_u32) + 2u) * INP_WID];
-        const unsigned char* restrict p_inp_line3_u8 = &p_inp_u8[((2u * j_u32) + 3u) * INP_WID];
-        unsigned char* restrict p_out_line_u8 = &p_out_u8[j_u32 * OUT_WID];
+        const unsigned char* restrict p_inp_line0_u8 = &p_inp_u8[((2u * j_u32) + 0u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line1_u8 = &p_inp_u8[((2u * j_u32) + 1u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line2_u8 = &p_inp_u8[((2u * j_u32) + 2u) * inp_wid_u32];
+        const unsigned char* restrict p_inp_line3_u8 = &p_inp_u8[((2u * j_u32) + 3u) * inp_wid_u32];
+        unsigned char* restrict p_out_line_u8 = &p_out_u8[j_u32 * out_wid_u32];
 
-        for (i_u32 = 0u; i_u32 < OUT_WID; i_u32 += 8u)
+        for (i_u32 = 0u; i_u32 < out_wid_u32; i_u32 += 8u)
         {
             uint8x16_t inp_line0_pel0_u8x16 = vld1q_u8(&p_inp_line0_u8[0]);
             uint8x16_t inp_line0_pel1_u8x16 = vld1q_u8(&p_inp_line0_u8[1]);
@@ -1006,7 +991,7 @@ void func_neon(const signed char* p_ker_s8, const unsigned char* p_inp_u8, unsig
 
             int16x8_t max_s16x8 = vmaxq_s16(max_line0_s16x8, max_line1_s16x8);
 
-            int16x8_t shift_s16x8 = vshrq_n_s16(max_s16x8, VAL_SHIFT);
+            int16x8_t shift_s16x8 = vshrq_n_s16(max_s16x8, val_shift_s32);
 
             int16x8_t shift_zero_s16x8 = vmaxq_s16(shift_s16x8, zero_s16x8);
             int16x8_t shift_255_s16x8 = vminq_s16(shift_zero_s16x8, u8max_s16x8);
