@@ -43,7 +43,7 @@ void main (void) {
 
     printf("natural C code version time: %f sec\n", (float)(clock() - time_start) / CLOCKS_PER_SEC);
 
-    fp = fopen("out_c_nat.bin", "wb");
+    fp = fopen("out_c_natc_filtering_barbara_256x256.bin", "wb");
     fwrite(&sa_out_0_u8[0], sizeof(unsigned char), OUT_WID * OUT_HEI, fp);
     fclose(fp);
  
@@ -57,7 +57,7 @@ void main (void) {
 
     printf("neon C code version time: %f sec\n", (float)(clock() - time_start) / CLOCKS_PER_SEC);
 
-    fp = fopen("out_c_neon.bin", "wb");
+    fp = fopen("out_c_neon_filtering_barbara_256x256.bin", "wb");
     fwrite(&sa_out_1_u8[0], sizeof(unsigned char), OUT_WID * OUT_HEI, fp);
     fclose(fp); 
 

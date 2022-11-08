@@ -8,12 +8,6 @@ use filtering::INP_WID;
 use filtering::INP_HEI;
 use filtering::OUT_WID;
 use filtering::OUT_HEI;
-//use crate::natr::func_natr;
-//use crate::neon::func_neon;
-
-//pub mod defines;
-//pub mod natr;
-//pub mod neon;
 
 const ITERATION: usize = 1000;
 
@@ -22,7 +16,12 @@ fn main() {
     let out_filename = r"barbara_512x512.y";
     let out_pool_natr_filename = r"barbara_256x256_pool_natr.y";
     let out_pool_neon_filename = r"barbara_256x256_pool_neon.y";
-    
+    let ref_filename = r"../out_c_natc_filtering_barbara_256x256.bin";
+
+    let mut ref_file = File::open(&ref_filename).expect("no ref file found");
+    let mut ref_buffer = vec![0; OUT_WID * OUT_HEI];
+    ref_file.read(&mut ref_buffer).expect("buffer overflow");
+
     let mut inp_file = File::open(&inp_filename).expect("no inp file found");
     //let metadata = fs::metadata(&inp_filename).expect("unable to read metadata");
     let mut buffer = vec![0; INP_WID * INP_HEI];
@@ -93,9 +92,13 @@ fn main() {
         for i in 0..OUT_WID {
             let natr_value = a_out_pool_y_natr_u8[i + (j * OUT_WID)];
             let neon_value = a_out_pool_y_neon_u8[i + (j * OUT_WID)];
+            let ref_value = ref_buffer[i + (j * OUT_WID)];
 
-            if natr_value != neon_value {
-                println!("mismatch ({i}, {j}): {natr_value}, {neon_value}");
+            if natr_value != ref_value {
+                println!("natr mismatch! ({i}, {j}): {natr_value}, {ref_value}");
+            }
+            if neon_value != ref_value {
+                println!("neon mismatch! ({i}, {j}): {neon_value}, {ref_value}");
             }
         }
     }
