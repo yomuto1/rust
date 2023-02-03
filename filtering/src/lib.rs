@@ -12,6 +12,9 @@ pub const VAL_SHIFT: i32 = 5;
 
 pub fn run_filter_natr(p_ker_s8: &[i8;3 * 3], p_inp_u8: &Vec<u8>, p_out_u8: &mut Vec<u8>) {
     natr::func_natr::<VAL_SHIFT>(INP_WID, OUT_WID, OUT_HEI, &p_ker_s8, &p_inp_u8, p_out_u8);
+    //unsafe {
+    //    natr::func_natr::<VAL_SHIFT>(INP_WID, OUT_WID, OUT_HEI, &p_ker_s8, &p_inp_u8, p_out_u8);
+    //}
 }
 
 pub fn run_filter_neon(p_ker_s8: &[i8;3 * 3], p_inp_u8: &Vec<u8>, p_out_u8: &mut Vec<u8>) {
