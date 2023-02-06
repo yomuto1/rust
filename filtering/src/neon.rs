@@ -18,6 +18,18 @@ pub unsafe fn func_neon<const VAL_SHIFT: i32>(inp_wid: usize, out_wid: usize, ou
             let p_inp_line3_pel0_u8: *const u8 = &p_inp_u8[0 + (i * 16) + ((2 * j) + 3) * inp_wid];
             let p_inp_line3_pel1_u8: *const u8 = &p_inp_u8[1 + (i * 16) + ((2 * j) + 3) * inp_wid];
             let p_inp_line3_pel2_u8: *const u8 = &p_inp_u8[2 + (i * 16) + ((2 * j) + 3) * inp_wid];
+            //let p_inp_line0_pel0_u8: *const u8 = p_inp_u8.get_unchecked(0 + (i * 16) + ((2 * j) + 0) * inp_wid);
+            //let p_inp_line0_pel1_u8: *const u8 = p_inp_u8.get_unchecked(1 + (i * 16) + ((2 * j) + 0) * inp_wid);
+            //let p_inp_line0_pel2_u8: *const u8 = p_inp_u8.get_unchecked(2 + (i * 16) + ((2 * j) + 0) * inp_wid);
+            //let p_inp_line1_pel0_u8: *const u8 = p_inp_u8.get_unchecked(0 + (i * 16) + ((2 * j) + 1) * inp_wid);
+            //let p_inp_line1_pel1_u8: *const u8 = p_inp_u8.get_unchecked(1 + (i * 16) + ((2 * j) + 1) * inp_wid);
+            //let p_inp_line1_pel2_u8: *const u8 = p_inp_u8.get_unchecked(2 + (i * 16) + ((2 * j) + 1) * inp_wid);
+            //let p_inp_line2_pel0_u8: *const u8 = p_inp_u8.get_unchecked(0 + (i * 16) + ((2 * j) + 2) * inp_wid);
+            //let p_inp_line2_pel1_u8: *const u8 = p_inp_u8.get_unchecked(1 + (i * 16) + ((2 * j) + 2) * inp_wid);
+            //let p_inp_line2_pel2_u8: *const u8 = p_inp_u8.get_unchecked(2 + (i * 16) + ((2 * j) + 2) * inp_wid);
+            //let p_inp_line3_pel0_u8: *const u8 = p_inp_u8.get_unchecked(0 + (i * 16) + ((2 * j) + 3) * inp_wid);
+            //let p_inp_line3_pel1_u8: *const u8 = p_inp_u8.get_unchecked(1 + (i * 16) + ((2 * j) + 3) * inp_wid);
+            //let p_inp_line3_pel2_u8: *const u8 = p_inp_u8.get_unchecked(2 + (i * 16) + ((2 * j) + 3) * inp_wid);
 
             let inp_line0_pel0_u8x16 = vld1q_u8(p_inp_line0_pel0_u8);
             let inp_line0_pel1_u8x16 = vld1q_u8(p_inp_line0_pel1_u8);

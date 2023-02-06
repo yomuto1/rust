@@ -5,6 +5,8 @@ pub unsafe fn func_neon(inp_wid: usize, out_wid: usize, out_hei: usize, p_inp_u8
         for i in 0..(out_wid / 8) {
             let p_inp_line0_u8: *const u8 = &p_inp_u8[(i * 16) + ((2 * j) + 0) * inp_wid];
             let p_inp_line1_u8: *const u8 = &p_inp_u8[(i * 16) + ((2 * j) + 1) * inp_wid];
+            //let p_inp_line0_u8: *const u8 = p_inp_u8.get_unchecked((i * 16) + ((2 * j) + 0) * inp_wid);
+            //let p_inp_line1_u8: *const u8 = p_inp_u8.get_unchecked((i * 16) + ((2 * j) + 1) * inp_wid);
 
             let inp_line0_u8x16 = vld1q_u8(p_inp_line0_u8);
             let inp_line1_u8x16 = vld1q_u8(p_inp_line1_u8);
